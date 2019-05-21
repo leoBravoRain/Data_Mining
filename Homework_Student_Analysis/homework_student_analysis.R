@@ -33,6 +33,15 @@ df = merge(df_students, df_attemps, by.x = 'student', by.y = 'student')
 library(plyr)
 df_activity = ddply(df, .(student), summarise, n_activities = length(durationseconds))
 
+# ANALYSIS BEFORE MERGE DATA CONSIDERING ALL ACTIVITES LIKE ONE ALL
+
+# Plot for display the details of the activities
+library(ggplot2)
+# ggplot(df, aes(x = applabel)) + geom_bar()
+
+# Plot activities in semester
+ggplot(df_attemps, aes(x = relativetime, color = applabel)) + geom_density()
+
 # Merge data
 df_agg = merge(df_students, df_activity, by.x = 'student', by.y = 'student')
 
@@ -47,6 +56,10 @@ df$grp <- NULL
 
 # Remove student because it is just and id
 df$student <- NULL
+
+
+# Backup for use for build the model
+df_definitive = df
 
 # variables:
 # 1. "social"
@@ -147,8 +160,10 @@ ggplot(melt(df[, ind_var_num]), aes(x = '' , y = value)) +
 # # PApi: <= 0,06
 # # n_activities: >= 830
 # 
-# # Remove outliers
-# df = df[!((df$pretest>= 0.55)  | (df$exam <= 50) | (df$Fi >= 1) | (df$Fi<=0.17) | (df$Vi <= 0.2) | (df$MApi <= 0.22) | (df$PApi <= 0.06) | (df$n_activities >= 830)),]
+# Remove outliers
+# df = df[!((df$pretest>= 0.55)  | (df$exam <= 50) | (df$Fi >= 1) |
+        # (df$Fi<=0.17) | (df$Vi <= 0.2) | (df$MApi <= 0.22) | 
+        # (df$PApi <= 0.06) | (df$n_activities >= 830)),]
 
 # Removing only n_activities outliers >= 830
 # df = df[!(df$n_activities>= 830),]
@@ -220,6 +235,7 @@ View(corr_var_list_ind)
 
 # Linear model
 l_m_1 <- lm(n_activities ~ pretest, data= df)
+summary(l_m_1)
 
 # Scatter plot 
 # ggplot(df, aes(x = pretest, y = n_activities)) + geom_point() + geom_abline(slope = l_m_1$coefficients[2], intercept = l_m_1$coefficients[1], color = "#00AFBB")
@@ -240,8 +256,8 @@ summary(l_m_3)
 l_m_4 <- lm(n_activities ~ pretest + Fi + social + gender, data= df)
 summary(l_m_4)
 
-# 5)  'n_activities' = 'pretest' + Fi + social + social*pretest
-l_m_5 <- lm(n_activities ~ pretest + Fi + social + social*pretest, data= df)
+# 5)  'n_activities' = 'pretest' + Fi + social + ǵender + social*pretest
+l_m_5 <- lm(n_activities ~ pretest + Fi + social + gender + social*pretest, data= df)
 summary(l_m_5)
 
 # 6)  'n_activities' = 'pretest' + Fi + social + social*pretest + social*Fi
@@ -252,27 +268,26 @@ summary(l_m_6)
 
 # Split in train/test data
 set.seed(101) # Set Seed so that same sample can be reproduced in future also
-# Now Selecting 75% of data as sample from total 'n' rows of the data  
-sample <- sample.int(n = nrow(df), size = floor(.70*nrow(df)), replace = F)
+# Now Selecting 70% of data as sample from total 'n' rows of the data  
+sample <- sample.int(n = nrow(df_definitive), size = floor(.70*nrow(df_definitive)), replace = F)
 train <- df[sample, ]
 test  <- df[-sample, ]
 
 # Build the model on training data -
-# model = l_m_5 
-model <- lm(n_activities ~ pretest + Fi + social + social*pretest, data= train)
+model <- lm(n_activities ~ pretest + Fi + social + gender + social*pretest, data= train)
 summary(model)
+
 # Make predictions
 predictions <- predict(model, test)
 
 # Accuracy of model
-# cor(predictions, test$n_activities)
+cor(predictions, test$n_activities)
+
 # predictions == test$n_activities
 # ifelse(dat$Genotype==dat$S288C,1,ifelse(dat$Genotype==dat$SK1,0,NA))
 
 # count rows who are TRUE to compare values between target and predictions
-class(predictions)
-class(test$n_activities)
+# class(predictions)
+# class(test$n_activities)
 
-sum(predictions == test$n_activities)
-
-mean(apply(predictions, 1, min) / apply(predictions, 1, max))  
+# sum(predictions == test$n_activities)
