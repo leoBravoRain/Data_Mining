@@ -39,14 +39,53 @@ get_model_metrics = function(cm, model) {
 file_name = "dataset_procesado.csv"
 df <- read.csv(file_name, sep = ';')
 
-### Analyze data ###
+### Data visualization ###
 
 library(ggplot2)
 
-# distribution of raw data
+# distribution of target in raw data
 ggplot(df, aes(x = Dropout)) + 
   geom_histogram(binwidth = 0.5) +
   ggtitle('Dropout distribution')
+
+# Libraries for visualizaion
+library(purrr)
+library(tidyr)
+library(ggplot2)
+
+# plot density of all variables
+# the first
+df[1:13] %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_density() +
+  theme(axis.text.x = element_text(size = 8, angle = 30))
+  # theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# the last
+df[14:26] %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_density() +
+  theme(axis.text.x = element_text(size = 8, angle = 30))
+
+# plot of boxplot of all variables
+ggplot(stack(df[1:8]), aes(x = ind, y = values)) +
+  geom_boxplot()  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(stack(df[9:25]), aes(x = ind, y = values)) +
+  geom_boxplot()  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(stack(df[26]), aes(x = ind, y = values)) +
+  geom_boxplot()  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 
 # MAYBE DO SOME PLOTS FOR ANALYZE DISTRIBUTION AND MEANS AND LOOK FOR SOME TREND WITH DROUPT
 
@@ -75,7 +114,7 @@ library(caret)
 ### Feature selection ###
 
 # set control options
-control <- rfeControl(functions=rfFuncs, method="cv", number=3)
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
 
 # run the RFE algorithm
 results <- rfe(df[,1:24], df[,25],  rfeControl=control)
@@ -217,3 +256,4 @@ df_stats[3,] = knn_stats
 
 # some times we haven't the stats for rf because it takes too much time
 df_stats[4,] = rf_stats
+df_stats[5,] = logistic_stats

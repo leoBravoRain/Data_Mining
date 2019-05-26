@@ -246,3 +246,4 @@ df_stats[3,] = knn_stats
 
 # some times we haven't the stats for rf because it takes too much time
 df_stats[4,] = rf_stats
+df_stats[5,] = logistic_stats

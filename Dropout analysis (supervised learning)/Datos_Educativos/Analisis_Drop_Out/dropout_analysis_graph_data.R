@@ -49,7 +49,31 @@ ggplot(df, aes(x = Dropout)) +
   geom_histogram(binwidth = 0.5) +
   ggtitle('Dropout distribution')
 
-# MAYBE DO SOME PLOTS FOR ANALYZE DISTRIBUTION AND MEANS AND LOOK FOR SOME TREND WITH DROUPT
+# Libraries for visualizaion
+library(purrr)
+library(tidyr)
+library(ggplot2)
+
+# plot density of all variables
+# the first
+df %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_density() +
+  theme(axis.text.x = element_text(size = 8, angle = 30))
+# theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plot of boxplot of all variables
+ggplot(stack(df[1:3]), aes(x = ind, y = values)) +
+  geom_boxplot()  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(stack(df[4:10]), aes(x = ind, y = values)) +
+  geom_boxplot()  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 # Delete student column
 df$Estudiante = NULL
@@ -85,7 +109,7 @@ library(caret)
 ### Feature selection ###
 
 # set control options
-control <- rfeControl(functions=rfFuncs, method="cv", number=3)
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
 
 # run the RFE algorithm
 results <- rfe(df[,1:6], df[,7],  rfeControl=control)
@@ -227,3 +251,4 @@ df_stats[3,] = knn_stats
 
 # some times we haven't the stats for rf because it takes too much time
 df_stats[4,] = rf_stats
+df_stats[5,] = logistic_stats
